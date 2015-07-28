@@ -18,15 +18,16 @@
  */
 package org.apache.reef.examples.hello;
 
-import org.apache.reef.client.DriverConfiguration;
-import org.apache.reef.client.DriverLauncher;
 import org.apache.reef.client.LauncherStatus;
 import org.apache.reef.runtime.yarn.client.YarnClientConfiguration;
 import org.apache.reef.tang.Configuration;
+import org.apache.reef.tang.exceptions.BindException;
 import org.apache.reef.tang.exceptions.InjectionException;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static org.apache.reef.examples.hello.HelloREEF.runHelloReef;
 
 /**
  * The Client for running HelloREEF on YARN.
@@ -44,30 +45,15 @@ public final class HelloREEFYarn {
 
 
   /**
-   * @return the configuration of the HelloREEF driver.
-   */
-  private static Configuration getDriverConfiguration() {
-    return DriverConfiguration.CONF
-        .set(DriverConfiguration.GLOBAL_LIBRARIES,
-            HelloREEFYarn.class.getProtectionDomain().getCodeSource().getLocation().getFile())
-        .set(DriverConfiguration.DRIVER_IDENTIFIER, "HelloREEF")
-        .set(DriverConfiguration.ON_DRIVER_STARTED, HelloDriver.StartHandler.class)
-        .set(DriverConfiguration.ON_EVALUATOR_ALLOCATED, HelloDriver.EvaluatorAllocatedHandler.class)
-        .build();
-  }
-
-  /**
    * Start Hello REEF job. Runs method runHelloReef().
    *
    * @param args command line parameters.
    * @throws org.apache.reef.tang.exceptions.BindException      configuration error.
    * @throws org.apache.reef.tang.exceptions.InjectionException configuration error.
    */
-  public static void main(final String[] args) throws InjectionException {
-
-    final LauncherStatus status = DriverLauncher
-        .getLauncher(YarnClientConfiguration.CONF.build())
-        .run(getDriverConfiguration(), JOB_TIMEOUT);
+  public static void main(final String[] args) throws BindException, InjectionException {
+    final Configuration runtimeConfiguration = YarnClientConfiguration.CONF.build();
+    final LauncherStatus status = runHelloReef(runtimeConfiguration, JOB_TIMEOUT);
     LOG.log(Level.INFO, "REEF job completed: {0}", status);
   }
 

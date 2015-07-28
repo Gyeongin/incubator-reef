@@ -16,26 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.examples.hello;
-
-import org.apache.reef.runtime.hdinsight.client.UnsafeHDInsightRuntimeConfiguration;
-import org.apache.reef.tang.exceptions.InjectionException;
-
-import java.io.IOException;
-
-import static org.apache.reef.examples.hello.HelloREEF.runHelloReefWithoutClient;
-
 /**
- * HelloREEF running on HDInsight.
+ * TODO: Document.
  */
-public final class HelloHDInsight {
-  public static void main(final String[] args) throws InjectionException, IOException {
-    runHelloReefWithoutClient(UnsafeHDInsightRuntimeConfiguration.fromEnvironment());
-  }
-
-  /**
-   * Empty private constructor to prohibit instantiation of utility class.
-   */
-  private HelloHDInsight() {
-  }
-}
+package org.apache.reef.examples.data.loading;

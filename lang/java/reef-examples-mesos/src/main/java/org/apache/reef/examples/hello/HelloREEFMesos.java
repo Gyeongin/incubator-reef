@@ -18,8 +18,6 @@
  */
 package org.apache.reef.examples.hello;
 
-import org.apache.reef.client.DriverConfiguration;
-import org.apache.reef.client.DriverLauncher;
 import org.apache.reef.client.LauncherStatus;
 import org.apache.reef.runtime.mesos.client.MesosClientConfiguration;
 import org.apache.reef.tang.Configuration;
@@ -28,29 +26,20 @@ import org.apache.reef.tang.exceptions.InjectionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.apache.reef.examples.hello.HelloREEF.runHelloReef;
+
 public final class HelloREEFMesos {
   private static final Logger LOG = Logger.getLogger(HelloREEFMesos.class.getName());
-
-  private static Configuration getDriverConfiguration() {
-    return DriverConfiguration.CONF
-        .set(DriverConfiguration.GLOBAL_LIBRARIES,
-            HelloREEFMesos.class.getProtectionDomain().getCodeSource().getLocation().getFile())
-        .set(DriverConfiguration.DRIVER_IDENTIFIER, "HelloREEF")
-        .set(DriverConfiguration.ON_DRIVER_STARTED, HelloDriver.StartHandler.class)
-        .set(DriverConfiguration.ON_EVALUATOR_ALLOCATED, HelloDriver.EvaluatorAllocatedHandler.class)
-        .build();
-  }
 
   /**
    * MASTER_IP(Mesos Master IP) is set to "localhost:5050".
    * You may change it to suit your cluster environment.
    */
   public static void main(final String[] args) throws InjectionException {
-    final LauncherStatus status = DriverLauncher
-        .getLauncher(MesosClientConfiguration.CONF
-            .set(MesosClientConfiguration.MASTER_IP, "localhost:5050")
-            .build())
-        .run(getDriverConfiguration());
+    final Configuration runtimeConfiguration = MesosClientConfiguration.CONF
+        .set(MesosClientConfiguration.MASTER_IP, "localhost:5050")
+        .build();
+    final LauncherStatus status = runHelloReef(runtimeConfiguration);
     LOG.log(Level.INFO, "REEF job completed: {0}", status);
   }
 

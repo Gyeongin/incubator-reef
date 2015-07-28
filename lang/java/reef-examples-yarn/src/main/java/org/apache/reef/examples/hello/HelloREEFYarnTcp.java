@@ -18,8 +18,6 @@
  */
 package org.apache.reef.examples.hello;
 
-import org.apache.reef.client.DriverConfiguration;
-import org.apache.reef.client.DriverLauncher;
 import org.apache.reef.client.LauncherStatus;
 import org.apache.reef.client.parameters.DriverConfigurationProviders;
 import org.apache.reef.io.TcpPortConfigurationProvider;
@@ -34,30 +32,21 @@ import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeTryCount;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.apache.reef.examples.hello.HelloREEF.runHelloReef;
+
 /**
  * The Client for Hello REEF example.
  */
-public final class HelloReefYarnTcp {
+public final class HelloREEFYarnTcp {
 
-  private static final Logger LOG = Logger.getLogger(HelloReefYarnTcp.class.getName());
+  private static final Logger LOG = Logger.getLogger(HelloREEFYarnTcp.class.getName());
 
   /**
    * Number of milliseconds to wait for the job to complete.
    */
   private static final int JOB_TIMEOUT = 150000; // 30 sec.
 
-  private HelloReefYarnTcp(){}
-  /**
-   * @return the configuration of the HelloREEF driver.
-   */
-  private static Configuration getDriverConfiguration() {
-    return DriverConfiguration.CONF
-        .set(DriverConfiguration.GLOBAL_LIBRARIES,
-            HelloReefYarnTcp.class.getProtectionDomain().getCodeSource().getLocation().getFile())
-        .set(DriverConfiguration.DRIVER_IDENTIFIER, "HelloREEF")
-        .set(DriverConfiguration.ON_DRIVER_STARTED, HelloDriver.StartHandler.class)
-        .set(DriverConfiguration.ON_EVALUATOR_ALLOCATED, HelloDriver.EvaluatorAllocatedHandler.class)
-        .build();
+  private HelloREEFYarnTcp() {
   }
 
   private static Configuration getRuntimeConfiguration(
@@ -87,9 +76,8 @@ public final class HelloReefYarnTcp {
     final int tcpRangeCount = args.length > 1 ? Integer.valueOf(args[1]) : DEFAULT_TCP_RANGE_COUNT;
     final int tcpTryCount = args.length > 2 ? Integer.valueOf(args[2]) : DEFAULT_TCP_RANGE_TRY_COUNT;
     Configuration runtimeConfiguration = getRuntimeConfiguration(tcpBeginPort, tcpRangeCount, tcpTryCount);
-    final LauncherStatus status = DriverLauncher
-        .getLauncher(runtimeConfiguration)
-        .run(getDriverConfiguration(), JOB_TIMEOUT);
+
+    final LauncherStatus status = runHelloReef(runtimeConfiguration, JOB_TIMEOUT);
     LOG.log(Level.INFO, "REEF job completed: {0}", status);
   }
 }

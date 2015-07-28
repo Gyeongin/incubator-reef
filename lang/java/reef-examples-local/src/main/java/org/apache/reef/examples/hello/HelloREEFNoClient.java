@@ -18,17 +18,15 @@
  */
 package org.apache.reef.examples.hello;
 
-import org.apache.reef.client.DriverConfiguration;
-import org.apache.reef.client.REEF;
 import org.apache.reef.runtime.local.client.LocalRuntimeConfiguration;
 import org.apache.reef.tang.Configuration;
-import org.apache.reef.tang.Tang;
 import org.apache.reef.tang.exceptions.BindException;
 import org.apache.reef.tang.exceptions.InjectionException;
-import org.apache.reef.util.EnvironmentUtils;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static org.apache.reef.examples.hello.HelloREEF.runHelloReefWithoutClient;
 
 /**
  * A main() for running hello REEF without a persistent client connection.
@@ -36,21 +34,6 @@ import java.util.logging.Logger;
 public final class HelloREEFNoClient {
 
   private static final Logger LOG = Logger.getLogger(HelloREEFNoClient.class.getName());
-
-  public static void runHelloReefWithoutClient(
-      final Configuration runtimeConf) throws InjectionException {
-
-    final REEF reef = Tang.Factory.getTang().newInjector(runtimeConf).getInstance(REEF.class);
-
-    final Configuration driverConf = DriverConfiguration.CONF
-        .set(DriverConfiguration.GLOBAL_LIBRARIES, EnvironmentUtils.getClassLocation(HelloDriver.class))
-        .set(DriverConfiguration.DRIVER_IDENTIFIER, "HelloREEF")
-        .set(DriverConfiguration.ON_DRIVER_STARTED, HelloDriver.StartHandler.class)
-        .set(DriverConfiguration.ON_EVALUATOR_ALLOCATED, HelloDriver.EvaluatorAllocatedHandler.class)
-        .build();
-
-    reef.submit(driverConf);
-  }
 
   public static void main(final String[] args) throws BindException, InjectionException {
 

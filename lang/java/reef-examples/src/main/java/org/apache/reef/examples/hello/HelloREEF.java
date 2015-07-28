@@ -21,30 +21,17 @@ package org.apache.reef.examples.hello;
 import org.apache.reef.client.DriverConfiguration;
 import org.apache.reef.client.DriverLauncher;
 import org.apache.reef.client.LauncherStatus;
-import org.apache.reef.runtime.local.client.LocalRuntimeConfiguration;
+import org.apache.reef.client.REEF;
 import org.apache.reef.tang.Configuration;
+import org.apache.reef.tang.Tang;
 import org.apache.reef.tang.exceptions.BindException;
 import org.apache.reef.tang.exceptions.InjectionException;
 import org.apache.reef.util.EnvironmentUtils;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * The Client for Hello REEF example.
  */
 public final class HelloREEF {
-  private static final Logger LOG = Logger.getLogger(HelloREEF.class.getName());
-
-  /**
-   * The upper limit on the number of Evaluators that the local resourcemanager will hand out concurrently.
-   */
-  private static final int MAX_NUMBER_OF_EVALUATORS = 2;
-
-  /**
-   * Number of milliseconds to wait for the job to complete.
-   */
-  private static final int JOB_TIMEOUT = 10000; // 10 sec.
 
   /**
    * @return the configuration of the HelloREEF driver.
@@ -58,25 +45,23 @@ public final class HelloREEF {
         .build();
   }
 
+  public static LauncherStatus runHelloReef(final Configuration runtimeConf)
+      throws BindException, InjectionException {
+    final Configuration driverConf = getDriverConfiguration();
+    return DriverLauncher.getLauncher(runtimeConf).run(driverConf);
+  }
+
   public static LauncherStatus runHelloReef(final Configuration runtimeConf, final int timeOut)
       throws BindException, InjectionException {
     final Configuration driverConf = getDriverConfiguration();
     return DriverLauncher.getLauncher(runtimeConf).run(driverConf, timeOut);
   }
 
-  /**
-   * Start Hello REEF job. Runs method runHelloReef().
-   *
-   * @param args command line parameters.
-   * @throws BindException      configuration error.
-   * @throws InjectionException configuration error.
-   */
-  public static void main(final String[] args) throws BindException, InjectionException {
-    final Configuration runtimeConfiguration = LocalRuntimeConfiguration.CONF
-        .set(LocalRuntimeConfiguration.MAX_NUMBER_OF_EVALUATORS, MAX_NUMBER_OF_EVALUATORS)
-        .build();
-    final LauncherStatus status = runHelloReef(runtimeConfiguration, JOB_TIMEOUT);
-    LOG.log(Level.INFO, "REEF job completed: {0}", status);
+  public static void runHelloReefWithoutClient(final Configuration runtimeConf) throws InjectionException {
+    final REEF reef = Tang.Factory.getTang().newInjector(runtimeConf).getInstance(REEF.class);
+    final Configuration driverConf = getDriverConfiguration();
+
+    reef.submit(driverConf);
   }
 
     /**
