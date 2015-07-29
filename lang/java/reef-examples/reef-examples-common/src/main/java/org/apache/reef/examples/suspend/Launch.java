@@ -19,8 +19,6 @@
 package org.apache.reef.examples.suspend;
 
 import org.apache.reef.client.ClientConfiguration;
-import org.apache.reef.runtime.local.client.LocalRuntimeConfiguration;
-import org.apache.reef.runtime.yarn.client.YarnClientConfiguration;
 import org.apache.reef.tang.Configuration;
 import org.apache.reef.tang.Injector;
 import org.apache.reef.tang.JavaConfigurationBuilder;
@@ -45,10 +43,6 @@ public final class Launch {
    * Standard Java logger.
    */
   private static final Logger LOG = Logger.getLogger(Launch.class.getName());
-  /**
-   * The upper limit on the number of Evaluators that the local resourcemanager will hand out concurrently.
-   */
-  private static final int MAX_NUMBER_OF_EVALUATORS = 4;
 
   /**
    * This class should not be instantiated.
@@ -93,7 +87,7 @@ public final class Launch {
    * @throws InjectionException if configuration commandLineInjector fails.
    * @throws IOException        error reading the configuration.
    */
-  private static Configuration getClientConfiguration(final String[] args)
+  private static Configuration getClientConfiguration(final Configuration runtimeConfiguration, final String[] args)
       throws BindException, InjectionException, IOException {
     final Configuration commandLineConf = parseCommandLine(args);
 
@@ -104,50 +98,23 @@ public final class Launch {
         .set(ClientConfiguration.ON_RUNTIME_ERROR, SuspendClient.RuntimeErrorHandler.class)
         .build();
 
-    // TODO: Remove the injector, have stuff injected.
-    final Injector commandLineInjector = Tang.Factory.getTang().newInjector(commandLineConf);
-    final boolean isLocal = commandLineInjector.getNamedInstance(Local.class);
-    final Configuration runtimeConfiguration;
-    if (isLocal) {
-      LOG.log(Level.INFO, "Running on the local runtime");
-      runtimeConfiguration = LocalRuntimeConfiguration.CONF
-          .set(LocalRuntimeConfiguration.MAX_NUMBER_OF_EVALUATORS, MAX_NUMBER_OF_EVALUATORS)
-          .build();
-    } else {
-      LOG.log(Level.INFO, "Running on YARN");
-      runtimeConfiguration = YarnClientConfiguration.CONF.build();
-    }
-
     return Tang.Factory.getTang()
         .newConfigurationBuilder(runtimeConfiguration, clientConfiguration,
             cloneCommandLineConfiguration(commandLineConf))
         .build();
   }
 
-  /**
-   * Main method that runs the example.
-   *
-   * @param args command line parameters.
-   */
-  public static void main(final String[] args) {
-    try {
-      final Configuration config = getClientConfiguration(args);
+  public static void runSuspendReef(final Configuration runtimeConfiguration, final String[] args) throws Exception {
+    final Configuration config = getClientConfiguration(runtimeConfiguration, args);
+    LOG.log(Level.INFO, "Configuration:\n--\n{0}--",
+        new AvroConfigurationSerializer().toString(config));
 
-      LOG.log(Level.INFO, "Configuration:\n--\n{0}--",
-          new AvroConfigurationSerializer().toString(config));
+    final Injector injector = Tang.Factory.getTang().newInjector(config);
+    final SuspendClient client = injector.getInstance(SuspendClient.class);
 
-      final Injector injector = Tang.Factory.getTang().newInjector(config);
-      final SuspendClient client = injector.getInstance(SuspendClient.class);
-
-      client.submit();
-      client.waitForCompletion();
-      LOG.info("Done!");
-
-    } catch (final BindException | IOException | InjectionException ex) {
-      LOG.log(Level.SEVERE, "Cannot launch: configuration error", ex);
-    } catch (final Exception ex) {
-      LOG.log(Level.SEVERE, "Cleanup error", ex);
-    }
+    client.submit();
+    client.waitForCompletion();
+    LOG.info("Done!");
   }
 
   /**

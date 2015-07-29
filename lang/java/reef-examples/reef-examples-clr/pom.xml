@@ -26,9 +26,8 @@ under the License.
 
     <parent>
         <groupId>org.apache.reef</groupId>
-        <artifactId>reef-project</artifactId>
+        <artifactId>reef-examples</artifactId>
         <version>0.12.0-incubating-SNAPSHOT</version>
-        <relativePath>../../../..</relativePath>
     </parent>
 
     <dependencies>

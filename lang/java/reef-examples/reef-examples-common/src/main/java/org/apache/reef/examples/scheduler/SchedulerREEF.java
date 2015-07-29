@@ -21,7 +21,6 @@ package org.apache.reef.examples.scheduler;
 import org.apache.commons.cli.ParseException;
 import org.apache.reef.client.DriverConfiguration;
 import org.apache.reef.client.REEF;
-import org.apache.reef.runtime.local.client.LocalRuntimeConfiguration;
 import org.apache.reef.tang.Configuration;
 import org.apache.reef.tang.Configurations;
 import org.apache.reef.tang.Tang;
@@ -38,11 +37,6 @@ import java.io.IOException;
  * REEF TaskScheduler.
  */
 public final class SchedulerREEF {
-  /**
-   * The upper limit on the number of Evaluators that the local resourcemanager will hand out concurrently.
-   */
-  private static final int MAX_NUMBER_OF_EVALUATORS = 3;
-
   /**
    * Command line parameter = true to reuse evaluators,.
    * or false to allocate/close for each iteration
@@ -97,18 +91,6 @@ public final class SchedulerREEF {
 
     final REEF reef = tang.newInjector(runtimeConf).getInstance(REEF.class);
     reef.submit(driverConf);
-  }
-
-  /**
-   * Main program.
-   * @param args
-   * @throws InjectionException
-   */
-  public static void main(final String[] args) throws InjectionException, IOException, ParseException {
-    final Configuration runtimeConfiguration = LocalRuntimeConfiguration.CONF
-        .set(LocalRuntimeConfiguration.MAX_NUMBER_OF_EVALUATORS, MAX_NUMBER_OF_EVALUATORS)
-        .build();
-    runTaskScheduler(runtimeConfiguration, args);
   }
 
   /**
