@@ -20,8 +20,6 @@ package org.apache.reef.examples.pool;
 
 import org.apache.reef.client.DriverConfiguration;
 import org.apache.reef.client.DriverLauncher;
-import org.apache.reef.runtime.local.client.LocalRuntimeConfiguration;
-import org.apache.reef.runtime.yarn.client.YarnClientConfiguration;
 import org.apache.reef.tang.Configuration;
 import org.apache.reef.tang.Injector;
 import org.apache.reef.tang.JavaConfigurationBuilder;
@@ -39,14 +37,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Pool of Evaluators example - main class.
+ * Pool of Evaluators example.
  */
 public final class Launch {
 
-  /**
-   * The upper limit on the number of Evaluators that the local resourcemanager will hand out concurrently.
-   */
-  private static final int MAX_NUMBER_OF_EVALUATORS = 4;
   /**
    * Standard Java logger.
    */
@@ -92,6 +86,20 @@ public final class Launch {
     return cb.build();
   }
 
+  private static Configuration getDriverConf(final String jobId) {
+    return DriverConfiguration.CONF
+        .set(DriverConfiguration.GLOBAL_LIBRARIES, EnvironmentUtils.getClassLocation(JobDriver.class))
+        .set(DriverConfiguration.DRIVER_IDENTIFIER, jobId)
+        .set(DriverConfiguration.ON_DRIVER_STARTED, JobDriver.StartHandler.class)
+        .set(DriverConfiguration.ON_DRIVER_STOP, JobDriver.StopHandler.class)
+        .set(DriverConfiguration.ON_EVALUATOR_ALLOCATED, JobDriver.AllocatedEvaluatorHandler.class)
+        .set(DriverConfiguration.ON_CONTEXT_ACTIVE, JobDriver.ActiveContextHandler.class)
+        .set(DriverConfiguration.ON_TASK_RUNNING, JobDriver.RunningTaskHandler.class)
+        .set(DriverConfiguration.ON_TASK_COMPLETED, JobDriver.CompletedTaskHandler.class)
+        .set(DriverConfiguration.ON_EVALUATOR_COMPLETED, JobDriver.CompletedEvaluatorHandler.class)
+        .build();
+  }
+
   /**
    * Parse command line arguments and create TANG configuration ready to be submitted to REEF.
    *
@@ -101,73 +109,42 @@ public final class Launch {
    * @throws InjectionException if configuration commandLineInjector fails.
    */
   private static Configuration getClientConfiguration(
-      final Configuration commandLineConf, final boolean isLocal)
+      final Configuration commandLineConf, final Configuration runtimeConf)
       throws BindException, InjectionException {
-    final Configuration runtimeConfiguration;
-    if (isLocal) {
-      LOG.log(Level.FINE, "Running on the local runtime");
-      runtimeConfiguration = LocalRuntimeConfiguration.CONF
-          .set(LocalRuntimeConfiguration.MAX_NUMBER_OF_EVALUATORS, MAX_NUMBER_OF_EVALUATORS)
-          .build();
-    } else {
-      LOG.log(Level.FINE, "Running on YARN");
-      runtimeConfiguration = YarnClientConfiguration.CONF.build();
-    }
     return Tang.Factory.getTang().newConfigurationBuilder(
-        runtimeConfiguration, cloneCommandLineConfiguration(commandLineConf))
+        runtimeConf, cloneCommandLineConfiguration(commandLineConf))
         .build();
   }
 
-  /**
-   * Main method that launches the REEF job.
-   *
-   * @param args command line parameters.
-   */
-  public static void main(final String[] args) {
+  public static void runPoolReef(final Configuration runtimeConf, final String[] args)
+      throws BindException, InjectionException, IOException {
+    final Configuration commandLineConf = parseCommandLine(args);
+    final Injector injector = Tang.Factory.getTang().newInjector(commandLineConf);
 
-    try {
+    final int numEvaluators = injector.getNamedInstance(NumEvaluators.class);
+    final int numTasks = injector.getNamedInstance(NumTasks.class);
+    final int delay = injector.getNamedInstance(Delay.class);
+    final int jobNum = injector.getNamedInstance(JobId.class);
 
-      final Configuration commandLineConf = parseCommandLine(args);
-      final Injector injector = Tang.Factory.getTang().newInjector(commandLineConf);
+    final String jobId = String.format("pool.e_%d.a_%d.d_%d.%d",
+        numEvaluators, numTasks, delay, jobNum < 0 ? System.currentTimeMillis() : jobNum);
 
-      final boolean isLocal = injector.getNamedInstance(Local.class);
-      final int numEvaluators = injector.getNamedInstance(NumEvaluators.class);
-      final int numTasks = injector.getNamedInstance(NumTasks.class);
-      final int delay = injector.getNamedInstance(Delay.class);
-      final int jobNum = injector.getNamedInstance(JobId.class);
+    // Timeout: delay + 6 extra seconds per Task per Evaluator + 2 minutes to allocate each Evaluator:
+    final int timeout = numTasks * (delay + 6) * 1000 / numEvaluators + numEvaluators * 120000;
 
-      final String jobId = String.format("pool.e_%d.a_%d.d_%d.%d",
-          numEvaluators, numTasks, delay, jobNum < 0 ? System.currentTimeMillis() : jobNum);
+    final Configuration runtimeConfig = getClientConfiguration(commandLineConf, runtimeConf);
+    LOG.log(Level.INFO, "TIME: Start Client {0} with timeout {1} sec. Configuration:\n--\n{2}--",
+        new Object[]{jobId, timeout / 1000, new AvroConfigurationSerializer().toString(runtimeConfig)});
 
-      // Timeout: delay + 6 extra seconds per Task per Evaluator + 2 minutes to allocate each Evaluator:
-      final int timeout = numTasks * (delay + 6) * 1000 / numEvaluators + numEvaluators * 120000;
+    final Configuration driverConfig = getDriverConf(jobId);
 
-      final Configuration runtimeConfig = getClientConfiguration(commandLineConf, isLocal);
-      LOG.log(Level.INFO, "TIME: Start Client {0} with timeout {1} sec. Configuration:\n--\n{2}--",
-          new Object[]{jobId, timeout / 1000, new AvroConfigurationSerializer().toString(runtimeConfig)});
+    final Configuration submittedConfiguration = Tang.Factory.getTang()
+        .newConfigurationBuilder(driverConfig, commandLineConf).build();
 
-      final Configuration driverConfig = DriverConfiguration.CONF
-          .set(DriverConfiguration.GLOBAL_LIBRARIES, EnvironmentUtils.getClassLocation(JobDriver.class))
-          .set(DriverConfiguration.DRIVER_IDENTIFIER, jobId)
-          .set(DriverConfiguration.ON_DRIVER_STARTED, JobDriver.StartHandler.class)
-          .set(DriverConfiguration.ON_DRIVER_STOP, JobDriver.StopHandler.class)
-          .set(DriverConfiguration.ON_EVALUATOR_ALLOCATED, JobDriver.AllocatedEvaluatorHandler.class)
-          .set(DriverConfiguration.ON_CONTEXT_ACTIVE, JobDriver.ActiveContextHandler.class)
-          .set(DriverConfiguration.ON_TASK_RUNNING, JobDriver.RunningTaskHandler.class)
-          .set(DriverConfiguration.ON_TASK_COMPLETED, JobDriver.CompletedTaskHandler.class)
-          .set(DriverConfiguration.ON_EVALUATOR_COMPLETED, JobDriver.CompletedEvaluatorHandler.class)
-          .build();
+    DriverLauncher.getLauncher(runtimeConfig)
+        .run(submittedConfiguration, timeout);
 
-      final Configuration submittedConfiguration = Tang.Factory.getTang()
-          .newConfigurationBuilder(driverConfig, commandLineConf).build();
-      DriverLauncher.getLauncher(runtimeConfig)
-          .run(submittedConfiguration, timeout);
-
-      LOG.log(Level.INFO, "TIME: Stop Client {0}", jobId);
-
-    } catch (final BindException | InjectionException | IOException ex) {
-      LOG.log(Level.SEVERE, "Job configuration error", ex);
-    }
+    LOG.log(Level.INFO, "TIME: Stop Client {0}", jobId);
   }
 
   /**

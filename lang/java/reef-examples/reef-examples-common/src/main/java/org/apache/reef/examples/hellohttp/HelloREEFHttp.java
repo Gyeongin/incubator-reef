@@ -22,7 +22,6 @@ import org.apache.reef.client.DriverConfiguration;
 import org.apache.reef.client.DriverLauncher;
 import org.apache.reef.client.DriverServiceConfiguration;
 import org.apache.reef.client.LauncherStatus;
-import org.apache.reef.runtime.local.client.LocalRuntimeConfiguration;
 import org.apache.reef.tang.Configuration;
 import org.apache.reef.tang.Configurations;
 import org.apache.reef.tang.exceptions.BindException;
@@ -32,22 +31,14 @@ import org.apache.reef.webserver.HttpHandlerConfiguration;
 import org.apache.reef.webserver.HttpServerReefEventHandler;
 import org.apache.reef.webserver.ReefEventStateManager;
 
-import java.util.logging.Logger;
-
 /**
  * Example to run HelloREEF with a webserver.
  */
 public final class HelloREEFHttp {
   /**
-   * The upper limit on the number of Evaluators that the local resourcemanager will hand out concurrently.
-   */
-  private static final int MAX_NUMBER_OF_EVALUATORS = 3;
-
-  /**
    * Number of milliseconds to wait for the job to complete.
    */
   public static final int JOB_TIMEOUT = 60 * 1000; // 60 sec.
-  private static final Logger LOG = Logger.getLogger(HelloREEFHttp.class.getName());
 
   /**
    * @return the driver-side configuration to be merged into the DriverConfiguration to enable the HTTP server.
@@ -102,19 +93,6 @@ public final class HelloREEFHttp {
     final Configuration driverConf =
         Configurations.merge(HelloREEFHttp.getDriverConfiguration(), getHTTPConfiguration());
     return DriverLauncher.getLauncher(runtimeConf).run(driverConf, timeOut);
-  }
-
-  /**
-   * main program.
-   *
-   * @param args
-   * @throws InjectionException
-   */
-  public static void main(final String[] args) throws InjectionException {
-    final Configuration runtimeConfiguration = LocalRuntimeConfiguration.CONF
-        .set(LocalRuntimeConfiguration.MAX_NUMBER_OF_EVALUATORS, MAX_NUMBER_OF_EVALUATORS)
-        .build();
-    final LauncherStatus status = runHelloReef(runtimeConfiguration, HelloREEFHttp.JOB_TIMEOUT);
   }
 
   /**
