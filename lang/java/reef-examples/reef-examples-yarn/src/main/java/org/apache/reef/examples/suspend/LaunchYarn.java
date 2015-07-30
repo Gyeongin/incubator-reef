@@ -18,7 +18,6 @@
  */
 package org.apache.reef.examples.suspend;
 
-import com.sun.tools.javac.util.List;
 import org.apache.reef.runtime.yarn.client.YarnClientConfiguration;
 import org.apache.reef.tang.Configuration;
 import org.apache.reef.tang.exceptions.BindException;
@@ -55,7 +54,7 @@ public final class LaunchYarn {
   public static void main(final String[] args) {
     try {
       final Configuration runtimeConfiguration = YarnClientConfiguration.CONF.build();
-      runSuspendReef(runtimeConfiguration, (String[])List.from(args).append("-local").append("false").toArray());
+      runSuspendReef(runtimeConfiguration, args);
     } catch (final BindException | IOException | InjectionException ex) {
       LOG.log(Level.SEVERE, "Cannot launch: configuration error", ex);
     } catch (final Exception ex) {

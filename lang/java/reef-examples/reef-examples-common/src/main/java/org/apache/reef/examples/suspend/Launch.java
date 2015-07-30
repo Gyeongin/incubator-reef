@@ -67,17 +67,6 @@ public final class Launch {
     return confBuilder.build();
   }
 
-  private static Configuration cloneCommandLineConfiguration(final Configuration commandLineConf)
-      throws InjectionException, BindException {
-    final Injector injector = Tang.Factory.getTang().newInjector(commandLineConf);
-    final JavaConfigurationBuilder cb = Tang.Factory.getTang().newConfigurationBuilder();
-    cb.bindNamedParameter(NumCycles.class, String.valueOf(injector.getNamedInstance(NumCycles.class)));
-    cb.bindNamedParameter(Delay.class, String.valueOf(injector.getNamedInstance(Delay.class)));
-    cb.bindNamedParameter(SuspendClientControl.Port.class,
-        String.valueOf(injector.getNamedInstance(SuspendClientControl.Port.class)));
-    return cb.build();
-  }
-
   /**
    * Parse command line arguments and create TANG configuration ready to be submitted to REEF.
    *
@@ -99,8 +88,7 @@ public final class Launch {
         .build();
 
     return Tang.Factory.getTang()
-        .newConfigurationBuilder(runtimeConfiguration, clientConfiguration,
-            cloneCommandLineConfiguration(commandLineConf))
+        .newConfigurationBuilder(runtimeConfiguration, clientConfiguration, commandLineConf)
         .build();
   }
 

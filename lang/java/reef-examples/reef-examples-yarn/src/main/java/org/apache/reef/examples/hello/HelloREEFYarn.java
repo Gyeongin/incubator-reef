@@ -43,7 +43,6 @@ public final class HelloREEFYarn {
    */
   private static final int JOB_TIMEOUT = 100000; // 100 sec.
 
-
   /**
    * Start Hello REEF job. Runs method runHelloReef().
    *

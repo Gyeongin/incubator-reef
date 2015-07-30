@@ -46,7 +46,6 @@ public final class LaunchYarn {
     throw new RuntimeException("Do not instantiate this class!");
   }
 
-
   /**
    * Main method that launches the REEF job.
    *

@@ -20,19 +20,12 @@ package org.apache.reef.examples.data.output;
 
 import org.apache.reef.annotations.audience.ClientSide;
 import org.apache.reef.client.LauncherStatus;
-import org.apache.reef.io.data.output.*;
+import org.apache.reef.io.data.output.TaskOutputStreamProviderLocal;
 import org.apache.reef.runtime.local.client.LocalRuntimeConfiguration;
 import org.apache.reef.tang.Configuration;
-import org.apache.reef.tang.Injector;
-import org.apache.reef.tang.JavaConfigurationBuilder;
-import org.apache.reef.tang.Tang;
-import org.apache.reef.tang.annotations.Name;
-import org.apache.reef.tang.annotations.NamedParameter;
 import org.apache.reef.tang.exceptions.BindException;
 import org.apache.reef.tang.exceptions.InjectionException;
-import org.apache.reef.tang.formats.CommandLine;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -46,65 +39,15 @@ import static org.apache.reef.examples.data.output.OutputServiceREEF.runOutputSe
 public final class OutputServiceREEFLocal {
   private static final Logger LOG = Logger.getLogger(OutputServiceREEFLocal.class.getName());
 
-  public static void main(final String[] args)
-      throws InjectionException, BindException, IOException {
-
-    final Tang tang = Tang.Factory.getTang();
-    final JavaConfigurationBuilder cb = tang.newConfigurationBuilder();
-    new CommandLine(cb)
-        .registerShortNameOfClass(TimeOut.class)
-        .registerShortNameOfClass(OutputDir.class)
-        .processCommandLine(args);
-
-    final Injector injector = tang.newInjector(cb.build());
-    final String outputDir = injector.getNamedInstance(OutputDir.class);
-    final int jobTimeout = injector.getNamedInstance(TimeOut.class) * 60 * 1000;
+  public static void main(final String[] args) throws InjectionException, BindException, IOException {
 
     LOG.log(Level.INFO, "Running the output service demo on the local runtime");
     final Configuration runtimeConf = LocalRuntimeConfiguration.CONF
         .set(LocalRuntimeConfiguration.MAX_NUMBER_OF_EVALUATORS, 3)
         .build();
-    final Configuration outputServiceConf = getOutputServiceConf(outputDir);
-    final LauncherStatus state = runOutputServiceReef(runtimeConf, outputServiceConf, jobTimeout);
+    final LauncherStatus state = runOutputServiceReef(runtimeConf, TaskOutputStreamProviderLocal.class, args, true);
 
     LOG.log(Level.INFO, "REEF job completed: {0}", state);
-  }
-
-  /**
-   * @param outputDir path of the output directory.
-   * @return The configuration to use OutputService
-   */
-  private static Configuration getOutputServiceConf(final String outputDir) {
-    return TaskOutputServiceBuilder.CONF
-        .set(TaskOutputServiceBuilder.TASK_OUTPUT_STREAM_PROVIDER, TaskOutputStreamProviderLocal.class)
-        .set(TaskOutputServiceBuilder.OUTPUT_PATH, getAbsolutePath(outputDir))
-        .build();
-  }
-
-  /**
-   * transform the given relative path into the absolute path based on the current directory where a user runs the demo.
-   * @param relativePath relative path
-   * @return absolute path
-   */
-  private static String getAbsolutePath(final String relativePath) {
-    final File outputFile = new File(relativePath);
-    return outputFile.getAbsolutePath();
-  }
-
-  /**
-   * Command line parameter = number of minutes before timeout.
-   */
-  @NamedParameter(doc = "Number of minutes before timeout",
-      short_name = "timeout", default_value = "2")
-  public static final class TimeOut implements Name<Integer> {
-  }
-
-  /**
-   * Command line parameter = path of the output directory.
-   */
-  @NamedParameter(doc = "Path of the output directory",
-      short_name = "output")
-  public static final class OutputDir implements Name<String> {
   }
 
   /**

@@ -22,14 +22,8 @@ import org.apache.reef.annotations.audience.ClientSide;
 import org.apache.reef.client.LauncherStatus;
 import org.apache.reef.runtime.local.client.LocalRuntimeConfiguration;
 import org.apache.reef.tang.Configuration;
-import org.apache.reef.tang.Injector;
-import org.apache.reef.tang.JavaConfigurationBuilder;
-import org.apache.reef.tang.Tang;
-import org.apache.reef.tang.annotations.Name;
-import org.apache.reef.tang.annotations.NamedParameter;
 import org.apache.reef.tang.exceptions.BindException;
 import org.apache.reef.tang.exceptions.InjectionException;
-import org.apache.reef.tang.formats.CommandLine;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -50,40 +44,15 @@ public final class DataLoadingREEFLocal {
    */
   private static final int MAX_NUMBER_OF_EVALUATORS = 16;
 
-  public static void main(final String[] args)
-      throws InjectionException, BindException, IOException {
-
-    final Tang tang = Tang.Factory.getTang();
-
-    final JavaConfigurationBuilder cb = tang.newConfigurationBuilder();
-
-    new CommandLine(cb)
-        .registerShortNameOfClass(TimeOut.class)
-        .registerShortNameOfClass(InputDir.class)
-        .processCommandLine(args);
-
-    final Injector injector = tang.newInjector(cb.build());
-
-    final int jobTimeout = injector.getNamedInstance(TimeOut.class) * 60 * 1000;
-    final String inputDir = injector.getNamedInstance(InputDir.class);
-
+  public static void main(final String[] args) throws InjectionException, BindException, IOException {
     LOG.log(Level.INFO, "Running Data Loading demo on the local runtime");
     final Configuration runtimeConfiguration = LocalRuntimeConfiguration.CONF
         .set(LocalRuntimeConfiguration.MAX_NUMBER_OF_EVALUATORS, MAX_NUMBER_OF_EVALUATORS)
         .build();
 
-    final LauncherStatus state = runDataLoadingReef(runtimeConfiguration, inputDir, jobTimeout);
+    final LauncherStatus state = runDataLoadingReef(runtimeConfiguration, args);
 
     LOG.log(Level.INFO, "REEF job completed: {0}", state);
-  }
-
-  @NamedParameter(doc = "Number of minutes before timeout",
-      short_name = "timeout", default_value = "2")
-  public static final class TimeOut implements Name<Integer> {
-  }
-
-  @NamedParameter(short_name = "input")
-  public static final class InputDir implements Name<String> {
   }
 
   /**

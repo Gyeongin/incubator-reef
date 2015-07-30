@@ -20,17 +20,11 @@ package org.apache.reef.examples.data.output;
 
 import org.apache.reef.annotations.audience.ClientSide;
 import org.apache.reef.client.LauncherStatus;
-import org.apache.reef.io.data.output.*;
+import org.apache.reef.io.data.output.TaskOutputStreamProviderHDFS;
 import org.apache.reef.runtime.yarn.client.YarnClientConfiguration;
 import org.apache.reef.tang.Configuration;
-import org.apache.reef.tang.Injector;
-import org.apache.reef.tang.JavaConfigurationBuilder;
-import org.apache.reef.tang.Tang;
-import org.apache.reef.tang.annotations.Name;
-import org.apache.reef.tang.annotations.NamedParameter;
 import org.apache.reef.tang.exceptions.BindException;
 import org.apache.reef.tang.exceptions.InjectionException;
-import org.apache.reef.tang.formats.CommandLine;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -45,53 +39,13 @@ import static org.apache.reef.examples.data.output.OutputServiceREEF.runOutputSe
 public final class OutputServiceREEFYarn {
   private static final Logger LOG = Logger.getLogger(OutputServiceREEFYarn.class.getName());
 
-  public static void main(final String[] args)
-      throws InjectionException, BindException, IOException {
-
-    final Tang tang = Tang.Factory.getTang();
-    final JavaConfigurationBuilder cb = tang.newConfigurationBuilder();
-    new CommandLine(cb)
-        .registerShortNameOfClass(TimeOut.class)
-        .registerShortNameOfClass(OutputDir.class)
-        .processCommandLine(args);
-
-    final Injector injector = tang.newInjector(cb.build());
-    final String outputDir = injector.getNamedInstance(OutputDir.class);
-    final int jobTimeout = injector.getNamedInstance(TimeOut.class) * 60 * 1000;
+  public static void main(final String[] args) throws InjectionException, BindException, IOException {
 
     LOG.log(Level.INFO, "Running the output service demo on YARN");
     final Configuration runtimeConf = YarnClientConfiguration.CONF.build();
-    final Configuration outputServiceConf = getOutputServiceConf(outputDir);
-    final LauncherStatus state = runOutputServiceReef(runtimeConf, outputServiceConf, jobTimeout);
+    final LauncherStatus state = runOutputServiceReef(runtimeConf, TaskOutputStreamProviderHDFS.class, args, false);
 
     LOG.log(Level.INFO, "REEF job completed: {0}", state);
-  }
-
-  /**
-   * @param outputDir path of the output directory.
-   * @return The configuration to use OutputService
-   */
-  private static Configuration getOutputServiceConf(final String outputDir) {
-    return TaskOutputServiceBuilder.CONF
-        .set(TaskOutputServiceBuilder.TASK_OUTPUT_STREAM_PROVIDER, TaskOutputStreamProviderHDFS.class)
-        .set(TaskOutputServiceBuilder.OUTPUT_PATH, outputDir)
-        .build();
-  }
-
-  /**
-   * Command line parameter = number of minutes before timeout.
-   */
-  @NamedParameter(doc = "Number of minutes before timeout",
-      short_name = "timeout", default_value = "2")
-  public static final class TimeOut implements Name<Integer> {
-  }
-
-  /**
-   * Command line parameter = path of the output directory.
-   */
-  @NamedParameter(doc = "Path of the output directory",
-      short_name = "output")
-  public static final class OutputDir implements Name<String> {
   }
 
   /**
