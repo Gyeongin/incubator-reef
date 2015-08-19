@@ -350,6 +350,10 @@ public class OperatorTopologyStructImpl implements OperatorTopologyStruct {
       childrenToRcvFrom.add(child.getId());
     }
 
+    for (final String child : childrenToRcvFrom) {
+      LOG.finest("@@@Topology: " + getQualifiedName() + " <- " + child);
+    }
+
     while (!childrenToRcvFrom.isEmpty()) {
       LOG.finest(getQualifiedName() + "Waiting for some child to send data");
       final NodeStruct child = nodesWithDataTakeUnsafe();
