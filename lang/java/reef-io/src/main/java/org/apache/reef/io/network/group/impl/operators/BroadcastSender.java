@@ -131,7 +131,9 @@ public class BroadcastSender<T> implements Broadcast.Sender<T>, EventHandler<Gro
 
     try {
       LOG.fine(this + " Broadcasting " + element);
+      LOG.info("COST_ESTIMATION: BROADCAST_SEND_START " + System.currentTimeMillis());
       topology.sendToChildren(dataCodec.encode(element), ReefNetworkGroupCommProtos.GroupCommMessage.Type.Broadcast);
+      LOG.info("COST_ESTIMATION: BROADCAST_SEND_END " + System.currentTimeMillis());
     } catch (final ParentDeadException e) {
       throw new RuntimeException("ParentDeadException", e);
     }

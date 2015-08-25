@@ -133,7 +133,9 @@ public class ReduceReceiver<T> implements Reduce.Receiver<T>, EventHandler<Group
     // Wait for children to send
     final T redVal;
     try {
+      LOG.info("COST_ESTIMATION: REDUCE_RECEIVE_START " + System.currentTimeMillis());
       redVal = topology.recvFromChildren(reduceFunction, dataCodec);
+      LOG.info("COST_ESTIMATION: REDUCE_RECEIVE_END " + System.currentTimeMillis());
     } catch (final ParentDeadException e) {
       throw new RuntimeException("ParentDeadException", e);
     }

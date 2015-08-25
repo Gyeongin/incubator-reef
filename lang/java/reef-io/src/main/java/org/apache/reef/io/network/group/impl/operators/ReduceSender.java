@@ -139,7 +139,9 @@ public class ReduceSender<T> implements Reduce.Sender<T>, EventHandler<GroupComm
     LOG.finest("Waiting for children");
     // Wait for children to send
     try {
+      LOG.info("COST_ESTIMATION: REDUCE_RECEIVE_START " + System.currentTimeMillis());
       final T reducedValueOfChildren = topology.recvFromChildren(reduceFunction, dataCodec);
+      LOG.info("COST_ESTIMATION: REDUCE_RECEIVE_END " + System.currentTimeMillis());
       final List<T> vals = new ArrayList<>(2);
       vals.add(myData);
       if (reducedValueOfChildren != null) {
@@ -147,7 +149,9 @@ public class ReduceSender<T> implements Reduce.Sender<T>, EventHandler<GroupComm
       }
       final T reducedValue = reduceFunction.apply(vals);
       LOG.fine(this + " Sending local " + reducedValue + " to parent");
+      LOG.info("COST_ESTIMATION: REDUCE_SEND_START " + System.currentTimeMillis());
       topology.sendToParent(dataCodec.encode(reducedValue), ReefNetworkGroupCommProtos.GroupCommMessage.Type.Reduce);
+      LOG.info("COST_ESTIMATION: REDUCE_SEND_END " + System.currentTimeMillis());
     } catch (final ParentDeadException e) {
       throw new RuntimeException("ParentDeadException", e);
     }

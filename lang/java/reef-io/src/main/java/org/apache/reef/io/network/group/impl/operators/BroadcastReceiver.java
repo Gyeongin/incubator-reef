@@ -135,7 +135,9 @@ public class BroadcastReceiver<T> implements Broadcast.Receiver<T>, EventHandler
     LOG.fine(this + " Waiting to receive broadcast");
     final byte[] data;
     try {
+      LOG.info("COST_ESTIMATION: BROADCAST_RECEIVE_START " + System.currentTimeMillis());
       data = topology.recvFromParent(ReefNetworkGroupCommProtos.GroupCommMessage.Type.Broadcast);
+      LOG.info("COST_ESTIMATION: BROADCAST_RECEIVE_END " + System.currentTimeMillis());
       // TODO: Should receive the identity element instead of null
       if (data == null) {
         LOG.fine(this + " Received null. Perhaps one of my ancestors is dead.");
@@ -147,8 +149,9 @@ public class BroadcastReceiver<T> implements Broadcast.Receiver<T>, EventHandler
         LOG.fine(this + " Received: " + retVal);
         LOG.finest(this + " Sending to children.");
       }
-
+      LOG.info("COST_ESTIMATION: BROADCAST_SEND_START " + System.currentTimeMillis());
       topology.sendToChildren(data, ReefNetworkGroupCommProtos.GroupCommMessage.Type.Broadcast);
+      LOG.info("COST_ESTIMATION: BROADCAST_SEND_END " + System.currentTimeMillis());
     } catch (final ParentDeadException e) {
       throw new RuntimeException("ParentDeadException", e);
     }
