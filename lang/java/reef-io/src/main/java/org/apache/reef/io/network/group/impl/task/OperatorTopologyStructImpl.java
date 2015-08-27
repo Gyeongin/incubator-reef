@@ -311,6 +311,7 @@ public class OperatorTopologyStructImpl implements OperatorTopologyStruct {
     LOG.entering("OperatorTopologyStructImpl", "sendToChildren", new Object[]{getQualifiedName(), data, msgType});
     for (final NodeStruct child : children) {
       sendToNode(data, msgType, child);
+      LOG.info("@@@Topology: " + getQualifiedName() + " <- " + child.getId());
     }
     LOG.exiting("OperatorTopologyStructImpl", "sendToChildren", Arrays.toString(new Object[]{getQualifiedName(),
         data, msgType}));
@@ -348,10 +349,6 @@ public class OperatorTopologyStructImpl implements OperatorTopologyStruct {
     final List<T> retLst = new ArrayList<>(2);
     for (final NodeStruct child : children) {
       childrenToRcvFrom.add(child.getId());
-    }
-
-    for (final String child : childrenToRcvFrom) {
-      LOG.finest("@@@Topology: " + getQualifiedName() + " <- " + child);
     }
 
     while (!childrenToRcvFrom.isEmpty()) {
