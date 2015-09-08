@@ -121,7 +121,7 @@ public class CommunicationGroupDriverImpl implements CommunicationGroupDriver {
       throw new IllegalStateException("Can't add more operators to a finalised spec");
     }
     operatorSpecs.put(operatorName, spec);
-    final Topology topology = new FlatTopology(senderStage, groupName, operatorName, driverId, numberOfTasks);
+    final Topology topology = new TreeTopology(senderStage, groupName, operatorName, driverId, numberOfTasks, fanOut);
     topology.setRootTask(spec.getSenderId());
     topology.setOperatorSpecification(spec);
     topologies.put(operatorName, topology);
@@ -140,7 +140,7 @@ public class CommunicationGroupDriverImpl implements CommunicationGroupDriver {
     }
     LOG.finer(getQualifiedName() + "Adding reduce operator to tree topology: " + spec);
     operatorSpecs.put(operatorName, spec);
-    final Topology topology = new FlatTopology(senderStage, groupName, operatorName, driverId, numberOfTasks);
+    final Topology topology = new TreeTopology(senderStage, groupName, operatorName, driverId, numberOfTasks, fanOut);
     topology.setRootTask(spec.getReceiverId());
     topology.setOperatorSpecification(spec);
     topologies.put(operatorName, topology);
@@ -158,7 +158,7 @@ public class CommunicationGroupDriverImpl implements CommunicationGroupDriver {
       throw new IllegalStateException("Can't add more operators to a finalised spec");
     }
     operatorSpecs.put(operatorName, spec);
-    final Topology topology = new FlatTopology(senderStage, groupName, operatorName, driverId, numberOfTasks);
+    final Topology topology = new TreeTopology(senderStage, groupName, operatorName, driverId, numberOfTasks, fanOut);
     topology.setRootTask(spec.getSenderId());
     topology.setOperatorSpecification(spec);
     topologies.put(operatorName, topology);
@@ -176,7 +176,7 @@ public class CommunicationGroupDriverImpl implements CommunicationGroupDriver {
       throw new IllegalStateException("Can't add more operators to a finalised spec");
     }
     operatorSpecs.put(operatorName, spec);
-    final Topology topology = new FlatTopology(senderStage, groupName, operatorName, driverId, numberOfTasks);
+    final Topology topology = new TreeTopology(senderStage, groupName, operatorName, driverId, numberOfTasks, fanOut);
     topology.setRootTask(spec.getReceiverId());
     topology.setOperatorSpecification(spec);
     topologies.put(operatorName, topology);
