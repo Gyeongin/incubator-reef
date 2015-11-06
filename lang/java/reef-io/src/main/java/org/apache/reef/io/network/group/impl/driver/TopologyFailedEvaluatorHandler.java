@@ -41,7 +41,6 @@ public class TopologyFailedEvaluatorHandler implements EventHandler<FailedEvalua
     if (failedEvaluator.getFailedTask().isPresent()) {
       final String failedTaskId = failedEvaluator.getFailedTask().get().getId();
       LOG.finest("Failed Evaluator contains a failed task: " + failedTaskId);
-      communicationGroupDriverImpl.failTask(failedTaskId);
       communicationGroupDriverImpl.removeTask(failedTaskId);
     }
     LOG.exiting("TopologyFailedEvaluatorHandler", "onNext", failedEvaluatorId);
